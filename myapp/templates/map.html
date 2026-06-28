@@ -98,15 +98,6 @@
       class BusLabel extends google.maps.OverlayView {
         constructor(pos, text) { super(); this.pos = pos; this.text = text; this.div = null; }
         onAdd() {
-          // 0096c7, 00b4d8
-          const d = document.createElement('div');
-          d.style.cssText = 'position:absolute;background:#00b4d8;color:#fff;font-size:13px;font-weight:700;padding:2px 4px;border-radius:4px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.28);pointer-events:auto;cursor:pointer;';
-          d.textContent = '🚌 ' + this.text;
-          this.div = d;
-          this.getPanes().floatPane.appendChild(d);
-          d.addEventListener('click', () => window.location.href = 'details.html?bus=' + encodeURIComponent(this.text));
-        }
-        onAdd() {
           this.div = $('<div>', {class: 'bus-label',text: `🚌 ${this.text}`})
           .click(() => location.href = `details.html?bus=${encodeURIComponent(this.text)}`);
           $(this.getPanes().floatPane).append(this.div);
@@ -114,12 +105,11 @@
         draw() {
           const p = this.getProjection().fromLatLngToDivPixel(this.pos);
           if (p && this.div) {
-            this.div.style.left = (p.x - this.div.offsetWidth / 2) + 'px';
-            this.div.style.top  = (p.y - 40) + 'px';
+            this.div.css({left: p.x - this.div.outerWidth() / 2,top: p.y - 40});
           }
         }
         setPosition(latLng) { this.pos = latLng; this.draw(); }
-        onRemove() { if (this.div) { this.div.parentNode.removeChild(this.div); this.div = null; } }
+        onRemove() {this.div?.remove();this.div = null;}
       }
 
       function refreshLabel() {

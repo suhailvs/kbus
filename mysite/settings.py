@@ -46,11 +46,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'mysite.wsgi.application'
-
-
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -66,3 +61,4 @@ USE_I18N = True
 
 USE_TZ = True
 STATIC_URL = 'static/'
+AUTH_USER_MODEL = "myapp.User"
