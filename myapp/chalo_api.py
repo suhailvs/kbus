@@ -18,12 +18,13 @@ class LogHelper:
     def save_and_get_response(self, response):
         self.save_field('duration_ms')
         self.save_field('status_code', response.status_code)
-        # try:
-        #     data = response.json()
-        #     self.save_field('response_body', data)
-        # except Exception as e:
-        #     self.save_field('error', str(e))
-        #     data = None
+        try:
+            data = response.json()
+            self.save_field('response_body', data)
+        except Exception as e:
+            self.save_field('error', str(e))
+            self.save_field('response_body', response.text)
+            raise e
         data = response.json()
         self.save_field('response_body', data)
         return data
