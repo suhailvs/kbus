@@ -21,6 +21,9 @@ class ChaloApiRequestLog(models.Model):
     error = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
+    class Meta:
+        ordering = ['-created_at']
+    
 class StopGroup(models.Model):
     name = models.CharField(max_length=255)
     # def is_all_near(self, threshold_km=1):

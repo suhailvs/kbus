@@ -12,8 +12,8 @@ def route(request, route_id):
     return render(request, "route.html", {"route":route,"msg": msg})
 
 def buses_in_radius_live(request):
-    # data = chalo_api.buses_in_radius(request.GET.get("lat"), request.GET.get("lng"))
-    data = chalo_api.buses_in_radius_dummy()
+    data = chalo_api.buses_in_radius(request.GET.get("lat"), request.GET.get("lng"))
+    # data = chalo_api.buses_in_radius_dummy()
     buses = []
     for bus in data['buses']:  
         buses.append({
@@ -22,8 +22,7 @@ def buses_in_radius_live(request):
             "log": str(bus['parameters']['lon']),
             "route_id": bus['session']['_routeId'],
             "vehicle_id": bus['session']['_vehicleId'],
-        })
-        
+        })        
     return JsonResponse({"buses": buses})
 
 def route_live_status(request, pk):
@@ -38,13 +37,17 @@ def route_live_status(request, pk):
         buses_by_stop.setdefault(bus['psId'], []).append({
             "vNo": bus["vNo"],
             "message":f"Left {name} {(current_time - bus['psTime']) // 1000} seconds ago",
+            "lat":bus["_latitude"],
+            "lng":bus["_longitude"],
         })
     stops_data = []
     for rs in route_stops:
         stop = rs.stop
         stops_data.append({
             "name": stop.group.name,
-            "platform": "Platform 1",
+            "order": rs.order,
             "buses": buses_by_stop.get(stop.stop_id, []),
+            "lat": stop.stop_lat,
+            "lng": stop.stop_lon,
         })
     return JsonResponse({"route_id": route.route_id, "stops": stops_data})

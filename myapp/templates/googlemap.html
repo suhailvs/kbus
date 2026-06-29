@@ -27,7 +27,7 @@
       pointer-events: auto;
       cursor: pointer;
     }
-    #coords-panel {position: absolute; top: 10px; left: 50%; background: #fff; z-index: 1000;}
+    /* #coords-panel {position: absolute; top: 10px; left: 50%; background: #fff; z-index: 1000;} */
     /* Refresh button — top-right */
     #refresh-btn {
       position: absolute;
@@ -70,10 +70,10 @@
     <span class="spinner-border text-info" role="status" aria-hidden="true"></span>
     <span class="visually-hidden">Refreshing…</span>
   </button>
-  <!-- Coords readout -->
+  <!-- Coords readout 
   <div id="coords-panel">
     Lat: <span id="lat-val">—</span> &nbsp; Lng: <span id="lng-val">—</span>
-  </div>
+  </div>-->
 </div>
 {% endblock %}
 {% block js %}
@@ -90,11 +90,7 @@
     map = new google.maps.Map(document.getElementById('map'), {
       center: INIT_CENTER,
       zoom: 14,
-      disableDefaultUI: false,
-      zoomControl: true,
-      streetViewControl: false,
-      mapTypeControl: false,
-      fullscreenControl: false,
+      disableDefaultUI: true,
       gestureHandling: 'greedy',
       styles: [
         { featureType: 'water',     elementType: 'geometry.fill',   stylers: [{ color: '#a8d4f5' }] },
@@ -162,7 +158,7 @@
       const c = map.getCenter();
       circle.setCenter(c);
       // refreshLabel();
-      document.getElementById('coords-panel').textContent = `Lat: ${c.lat().toFixed(6)}, Lng: ${c.lng().toFixed(6)}`;
+      // document.getElementById('coords-panel').textContent = `Lat: ${c.lat().toFixed(6)}, Lng: ${c.lng().toFixed(6)}`;
     });
     $('#refresh-btn').on('click', refreshLabel);
   }
