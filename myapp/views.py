@@ -2,18 +2,21 @@ from datetime import datetime
 from django.shortcuts import render
 from django.http import JsonResponse
 from .models import Route, RouteStop,Stop
-from .utils import remove_duplicates, create_route
+from .utils import remove_duplicates, get_or_create_route
 from . import chalo_api
 
-def home(request):
-    return render(request, 'map.html')
-
 def route(request, route_id):
-    route,msg = create_route(route_id)
+    route,msg = get_or_create_route(route_id)
     if not route:
         return JsonResponse({"status":400,"msg": msg})
-    return render(request, "route.html", {"route":route})
+    return render(request, "route.html", {"route":route,"msg": msg})
 
+def buses_in_radius_live(request):
+    print(request.GET.get("lat"),request.GET.get("lng"))
+    return JsonResponse({"buses": [
+        { "name": "Palakkad-Pathanamthitta", "lat": "10.59975", "log": "76.45969" },
+        { "name": "Bus 2", "lat": "10.599793", "log": "76.460434" }
+    ]})
 def route_live_status(request, pk):
     route = Route.objects.get(id=pk)
     route_stops = RouteStop.objects.filter(route=route).select_related("stop")

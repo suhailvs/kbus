@@ -43,6 +43,7 @@
       <p class="text-primary fw-semibold mb-1" style="font-size:11px;letter-spacing:.12em;text-transform:uppercase">KSRTC · {{ route.subCategory }} {{ route.serviceCategory }}</p>
       <p class="fw-bold mb-0 fs-5">{{ route.route_name }} <i class="ti ti-refresh" style="cursor: pointer;" id="refreshBtn"></i></p>
       <p class="text-secondary mb-0 small" style="overflow-wrap: anywhere;">Via:{{ route.via }}</p>
+      <p style="font-size:9px" class="text-secondary mb-0">{{ msg }}</p>
     </div>
     <span class="badge rounded-pill d-flex align-items-center gap-1 mt-1 px-3 py-2"
           style="background:#EAF5EC;border:1px solid #A8D8B0;color:#2E7D44;font-size:11px">
@@ -140,7 +141,7 @@ function fetchAndRender() {
 
 $(function () {
   $("#refreshBtn").on("click", fetchAndRender);
-  fetchAndRender(); // initial load
+  // fetchAndRender(); // initial load
 });
 
 </script>

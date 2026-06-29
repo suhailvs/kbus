@@ -1,9 +1,36 @@
 import requests
+import time
 
 API_URL='https://chalo.com/app/'
 
+class LogHelper:
+    def __init__(self,name, path, method='GET'):
+        from .models import ChaloApiRequestLog
+        self.log = ChaloApiRequestLog.objects.create(name=name, path=path, method=method)
+        self.start_time = time.perf_counter()
+
+    def save_field(self,field_name, data=''):
+        if field_name=='duration_ms':
+            data = int((time.perf_counter() - self.start_time) * 1000)
+        setattr(self.log, field_name, data)
+        self.log.save()
+    
+    def save_and_get_response(self, response):
+        self.save_field('duration_ms')
+        self.save_field('status_code', response.status_code)
+        # try:
+        #     data = response.json()
+        #     self.save_field('response_body', data)
+        # except Exception as e:
+        #     self.save_field('error', str(e))
+        #     data = None
+        data = response.json()
+        self.save_field('response_body', data)
+        return data
+
 def busses_in_radius():
     url = f'{API_URL}api/nearbybus/v2/city/PALAKKAD'
+    log = LogHelper(name="Busses in Radius", path=url, method='POST')
     headers = {
         'accept': 'application/json',
         'accesstoken': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI3MzU2Nzc1OTgxIiwiZGV2aWNlSWQiOiJmYjNiZDgxNjU4NzYyZDhlYTJiMmEwODNkODYxZDY1OSIsImlhdCI6MTc4MjM3MzU1NSwiZXhwIjoxNzgyMzgwNzU1LCJqdGkiOiJlbHd6MW1xdDc3MTZqIn0.BK_W7wiT0_jmgHnjvPTZsP0ktVk1S5J9TaHbHCZPynE',
@@ -35,14 +62,14 @@ def busses_in_radius():
     }
     payload = {"metaData":{"source":"web"},"requiredFields":{"nearbyBuses":{"lat":"10.5962","lng":"76.4814","radius":"1000.0"},"cardsInfo":{}}}
     response = requests.post(url, headers=headers, cookies=cookies, json=payload)
-    data = response.json()
-    return data
+    return log.save_and_get_response(response)
     
 def route_details(route,day):
     '''
     Get full route details. all stops for a route.
     '''
     url = f'{API_URL}api/scheduler_v4/v4/palakkad/routedetailslive'
+    log = LogHelper(name="Route Details", path=url)
     headers = {
         'accept': 'application/json',
         'accept-language': 'en-US,en;q=0.9',
@@ -68,11 +95,11 @@ def route_details(route,day):
     }
     params = {'route_id': route,'day': day}
     response = requests.get(url, headers=headers, cookies=cookies, params=params)
-    data = response.json()
-    return data
+    return log.save_and_get_response(response)
 
 def route_live(route,stop):
     url = f'{API_URL}api/vasudha/track/route-live-info/palakkad/{route}?stopIds={stop}'
+    log = LogHelper(name="Route Live Info", path=url)
     headers = {
         'sec-ch-ua-platform': '"Linux"',
         'Referer': f'{API_URL}live-tracking/route-map/{route}',
@@ -84,5 +111,7 @@ def route_live(route,stop):
         'Accept': 'application/json',
     }    
     response = requests.get(url, headers=headers)
-    data = response.json()
-    return data
+    return log.save_and_get_response(response)
+
+def busses_in_radius_dummy():
+    return {}

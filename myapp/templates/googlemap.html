@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block css %}
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Roboto', Arial, sans-serif;
+      background: #f5f5f5;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #map-wrapper {flex: 1; position: relative; overflow: hidden;}
+    #map { width: 100%; height: 100%; }
+    .bus-label {
+      position: absolute;
+      background: #00b4d8;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 2px 4px;
+      border-radius: 4px;
+      white-space: nowrap;
+      box-shadow: 0 2px 6px rgba(0,0,0,.28);
+      pointer-events: auto;
+      cursor: pointer;
+    }
+    #coords-panel {position: absolute; top: 10px; left: 50%; background: #fff; z-index: 1000;}
+    /* Refresh button — top-right */
+    #refresh-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 10;
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #refresh-btn .icon-refresh,
+    #refresh-btn .spinner-border {
+      position: absolute;
+      transition: opacity 0.15s;
+    }
+
+    #refresh-btn .icon-refresh   { opacity: 1; }
+    #refresh-btn .spinner-border { opacity: 0; width: 20px; height: 20px; }
+
+    #refresh-btn.loading .icon-refresh   { opacity: 0; }
+    #refresh-btn.loading .spinner-border { opacity: 1; }
+  </style>
+{% endblock %}
+{% block content %}
+<div id="map-wrapper">
+  <div id="map"></div>
+  <!-- Refresh button (Bootstrap btn + spinner) -->
+  <button id="refresh-btn" class="btn btn-light shadow" title="Refresh buses">
+    <svg class="icon-refresh" width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="23 4 23 10 17 10"/>
+      <polyline points="1 20 1 14 7 14"/>
+      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+    </svg>
+    <span class="spinner-border text-info" role="status" aria-hidden="true"></span>
+    <span class="visually-hidden">Refreshing…</span>
+  </button>
+  <!-- Coords readout -->
+  <div id="coords-panel">
+    Lat: <span id="lat-val">—</span> &nbsp; Lng: <span id="lng-val">—</span>
+  </div>
+</div>
+{% endblock %}
+{% block js %}
+<script
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBwFTs8_ByftQEytonOPdVpdV9N0uyi3h4&callback=initMap&v=weekly"
+  async defer>
+</script>
+<script>
+  const INIT_CENTER = { lat: 10.59975, lng: 76.45969 };
+  const API_URL = "{% url 'buses_in_radius_live' %}";
+  let map, circle, labelOverlays = [];
+  
+  function initMap() {
+    map = new google.maps.Map(document.getElementById('map'), {
+      center: INIT_CENTER,
+      zoom: 14,
+      disableDefaultUI: false,
+      zoomControl: true,
+      streetViewControl: false,
+      mapTypeControl: false,
+      fullscreenControl: false,
+      gestureHandling: 'greedy',
+      styles: [
+        { featureType: 'water',     elementType: 'geometry.fill',   stylers: [{ color: '#a8d4f5' }] },
+        { featureType: 'landscape', elementType: 'geometry.fill',   stylers: [{ color: '#e8edf0' }] },
+        { featureType: 'road',      elementType: 'geometry.fill',   stylers: [{ color: '#ffffff' }] },
+        { featureType: 'road',      elementType: 'geometry.stroke', stylers: [{ color: '#d0d0d0' }] },
+        { featureType: 'poi',       elementType: 'labels',          stylers: [{ visibility: 'off' }] }
+      ]
+    });
+    circle = new google.maps.Circle({
+      map,
+      center: INIT_CENTER,
+      radius: 1000,
+      strokeColor: '#888888',
+      strokeOpacity: 0.7,
+      strokeWeight: 1.5,
+      fillColor: '#aaaaaa',
+      fillOpacity: 0.18,
+      clickable: false,
+    });
+
+    // Bus route label overlay
+    class BusLabel extends google.maps.OverlayView {
+      constructor(pos, text) { super(); this.pos = pos; this.text = text; this.div = null; }
+      onAdd() {
+        this.div = $('<div>', {class: 'bus-label',text: `🚌 ${this.text}`})
+        .click(() => location.href = `/route/0IxkfZMw/?bus=${encodeURIComponent(this.text)}`);
+        $(this.getPanes().floatPane).append(this.div);
+      }
+      draw() {
+        const p = this.getProjection().fromLatLngToDivPixel(this.pos);
+        if (p && this.div) {
+          this.div.css({left: p.x - this.div.outerWidth() / 2,top: p.y - 40});
+        }
+      }
+      setPosition(latLng) { this.pos = latLng; this.draw(); }
+      onRemove() {this.div?.remove();this.div = null;}
+    }
+
+    window.refreshLabel = function () {
+      const $btn = $('#refresh-btn').addClass('loading').prop('disabled', true);
+      const center = map.getCenter();
+
+      $.ajax({
+        url: API_URL,method: "GET",dataType: "json",
+        data: {lat: center.lat().toFixed(6),lng: center.lng().toFixed(6)},
+        success: function (data) {
+          labelOverlays.forEach(o => o.setMap(null));
+          labelOverlays = [];
+          $.each(data.buses, function (i, b) {
+            const o = new BusLabel(new google.maps.LatLng(b.lat, b.log), b.name);
+            o.setMap(map);
+            labelOverlays.push(o);
+          });
+        },
+        error: function (xhr, status, err) {
+          console.error('Failed to load buses:', status, err);
+        },
+        complete: function () {
+          $btn.removeClass('loading').prop('disabled', false);
+        }
+      });
+    };
+    map.addListener('center_changed', () => {
+      const c = map.getCenter();
+      circle.setCenter(c);
+      // refreshLabel();
+      document.getElementById('coords-panel').textContent = `Lat: ${c.lat().toFixed(6)}, Lng: ${c.lng().toFixed(6)}`;
+    });
+    $('#refresh-btn').on('click', refreshLabel);
+  }
+  window.initMap = initMap;
+</script>
+  
+{% endblock %}
+    

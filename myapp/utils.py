@@ -22,10 +22,10 @@ def get_or_create_stop(stop_data):
     return stop
 
 @transaction.atomic
-def create_route(route_id):
+def get_or_create_route(route_id):
     route = Route.objects.filter(route_id=route_id).first()
     if route:
-        return (route, f"route({route_id}) already exists in DB.")
+        return (route, f"Route({route_id}) already exists in DB.")
     payload = chalo_api.route_details(route_id,datetime.today().strftime("%A").lower())
     route_data = payload.get("route")
     if not route_data:

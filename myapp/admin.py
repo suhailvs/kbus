@@ -7,7 +7,10 @@ admin.site.register(Stop)
 admin.site.register(Route)
 admin.site.register(RouteStop)
 admin.site.register(Trip)
-admin.site.register(ChaloApiRequestLog)
+
+@admin.register(ChaloApiRequestLog)
+class ChaloApiRequestLogAdmin(admin.ModelAdmin):
+    list_display = ("name", "method", "path", "status_code", "duration_ms", "created_at")
 
 @admin.register(StopGroup)
 class StopGroupAdmin(admin.ModelAdmin):

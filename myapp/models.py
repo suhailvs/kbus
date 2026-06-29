@@ -5,6 +5,7 @@ class User(AbstractUser):
     is_driver=models.BooleanField(default=False)
 
 class ChaloApiRequestLog(models.Model):
+    name = models.CharField(max_length=50)
     method = models.CharField(max_length=10)
     path = models.CharField(max_length=500)
     query_string = models.TextField(blank=True)
