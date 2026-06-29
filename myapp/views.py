@@ -12,11 +12,20 @@ def route(request, route_id):
     return render(request, "route.html", {"route":route,"msg": msg})
 
 def buses_in_radius_live(request):
-    print(request.GET.get("lat"),request.GET.get("lng"))
-    return JsonResponse({"buses": [
-        { "name": "Palakkad-Pathanamthitta", "lat": "10.59975", "log": "76.45969" },
-        { "name": "Bus 2", "lat": "10.599793", "log": "76.460434" }
-    ]})
+    # data = chalo_api.buses_in_radius(request.GET.get("lat"), request.GET.get("lng"))
+    data = chalo_api.buses_in_radius_dummy()
+    buses = []
+    for bus in data['buses']:  
+        buses.append({
+            "name": bus['session']['_routeName'],
+            "lat": str(bus['parameters']['lat']),
+            "log": str(bus['parameters']['lon']),
+            "route_id": bus['session']['_routeId'],
+            "vehicle_id": bus['session']['_vehicleId'],
+        })
+        
+    return JsonResponse({"buses": buses})
+
 def route_live_status(request, pk):
     route = Route.objects.get(id=pk)
     route_stops = RouteStop.objects.filter(route=route).select_related("stop")

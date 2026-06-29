@@ -13,11 +13,11 @@ class ChaloApiRequestLog(models.Model):
     request_headers = models.JSONField(default=dict, blank=True)
     request_body = models.JSONField(null=True, blank=True)
     # Response
-    status_code = models.PositiveSmallIntegerField()
+    status_code = models.PositiveSmallIntegerField(default=0)
     response_headers = models.JSONField(default=dict, blank=True)
     response_body = models.JSONField(null=True, blank=True)
     
-    duration_ms = models.PositiveIntegerField()
+    duration_ms = models.PositiveIntegerField(default=0)
     error = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     

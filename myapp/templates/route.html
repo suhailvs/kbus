@@ -69,8 +69,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
 <script>
 const API_URL = "{% url 'route_live_status' route.id %}";
-let targetBus = "RPE745";
-
+let targetBus = "{{request.GET.bus|default:''}}"; // bus number to scroll to on initial load
 function scrollToBus(busNumber) {
   const el = document.getElementById(`bus-${busNumber}`);
   if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); 

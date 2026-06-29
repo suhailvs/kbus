@@ -118,10 +118,10 @@
 
     // Bus route label overlay
     class BusLabel extends google.maps.OverlayView {
-      constructor(pos, text) { super(); this.pos = pos; this.text = text; this.div = null; }
+      constructor(pos, text, route_id, vehicle_id) { super(); this.pos = pos; this.text = text; this.route_id = route_id; this.vehicle_id = vehicle_id; this.div = null; }
       onAdd() {
         this.div = $('<div>', {class: 'bus-label',text: `🚌 ${this.text}`})
-        .click(() => location.href = `/route/0IxkfZMw/?bus=${encodeURIComponent(this.text)}`);
+        .click(() => location.href = `/route/${this.route_id}/?bus=${encodeURIComponent(this.vehicle_id)}`);
         $(this.getPanes().floatPane).append(this.div);
       }
       draw() {
@@ -145,7 +145,7 @@
           labelOverlays.forEach(o => o.setMap(null));
           labelOverlays = [];
           $.each(data.buses, function (i, b) {
-            const o = new BusLabel(new google.maps.LatLng(b.lat, b.log), b.name);
+            const o = new BusLabel(new google.maps.LatLng(b.lat, b.log), b.name, b.route_id, b.vehicle_id);
             o.setMap(map);
             labelOverlays.push(o);
           });

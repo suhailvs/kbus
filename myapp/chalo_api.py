@@ -4,9 +4,9 @@ import time
 API_URL='https://chalo.com/app/'
 
 class LogHelper:
-    def __init__(self,name, path, method='GET'):
+    def __init__(self,name, path, method='GET',request_body=None):
         from .models import ChaloApiRequestLog
-        self.log = ChaloApiRequestLog.objects.create(name=name, path=path, method=method)
+        self.log = ChaloApiRequestLog.objects.create(name=name, path=path, method=method, request_body=request_body)
         self.start_time = time.perf_counter()
 
     def save_field(self,field_name, data=''):
@@ -28,9 +28,8 @@ class LogHelper:
         self.save_field('response_body', data)
         return data
 
-def busses_in_radius():
-    url = f'{API_URL}api/nearbybus/v2/city/PALAKKAD'
-    log = LogHelper(name="Busses in Radius", path=url, method='POST')
+def buses_in_radius(lat,lng,radius=1000):
+    url = f'{API_URL}api/nearbybus/v2/city/PALAKKAD'    
     headers = {
         'accept': 'application/json',
         'accesstoken': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI3MzU2Nzc1OTgxIiwiZGV2aWNlSWQiOiJmYjNiZDgxNjU4NzYyZDhlYTJiMmEwODNkODYxZDY1OSIsImlhdCI6MTc4MjM3MzU1NSwiZXhwIjoxNzgyMzgwNzU1LCJqdGkiOiJlbHd6MW1xdDc3MTZqIn0.BK_W7wiT0_jmgHnjvPTZsP0ktVk1S5J9TaHbHCZPynE',
@@ -60,7 +59,8 @@ def busses_in_radius():
         'mp_b1925cf6c0b3db7d5f3904a66abf8ec7_mixpanel': '{"distinct_id":"fb3bd81658762d8ea2b2a083d861d659","$device_id":"69b9c059-6e28-4b09-a3e8-f941e2c18f3f","$initial_referrer":"https://chalo.com/chalo-app/track-your-bus-live","$initial_referring_domain":"chalo.com","__mps":{},"__mpso":{},"__mpus":{},"__mpa":{},"__mpu":{},"__mpr":[],"__mpap":[],"$user_id":"fb3bd81658762d8ea2b2a083d861d659","clientSource":"PWA","appVersionCode":"1001","selected language":"English","timeZone":"+05:30","deviceId":"fb3bd81658762d8ea2b2a083d861d659","mailId":"","phone":"7356775981","gender":"","firstName":"","lastName":"","mobileNumber":"7356775981","userId":"7356775981","selectedCity":"palakkad"}',
         '_ga_SEWPQ4G3XZ': 'GS2.1.s1782373509$o1$g1$t1782373609$j60$l0$h0',
     }
-    payload = {"metaData":{"source":"web"},"requiredFields":{"nearbyBuses":{"lat":"10.5962","lng":"76.4814","radius":"1000.0"},"cardsInfo":{}}}
+    payload = {"metaData":{"source":"web"},"requiredFields":{"nearbyBuses":{"lat":lat,"lng":lng,"radius":radius},"cardsInfo":{}}}
+    log = LogHelper(name="Busses in Radius", path=url, method='POST',request_body=payload)
     response = requests.post(url, headers=headers, cookies=cookies, json=payload)
     return log.save_and_get_response(response)
     
@@ -69,7 +69,6 @@ def route_details(route,day):
     Get full route details. all stops for a route.
     '''
     url = f'{API_URL}api/scheduler_v4/v4/palakkad/routedetailslive'
-    log = LogHelper(name="Route Details", path=url)
     headers = {
         'accept': 'application/json',
         'accept-language': 'en-US,en;q=0.9',
@@ -94,6 +93,7 @@ def route_details(route,day):
         'mp_b1925cf6c0b3db7d5f3904a66abf8ec7_mixpanel': '{"distinct_id":"fb3bd81658762d8ea2b2a083d861d659","$device_id":"69b9c059-6e28-4b09-a3e8-f941e2c18f3f","$initial_referrer":"https://chalo.com/chalo-app/track-your-bus-live","$initial_referring_domain":"chalo.com","__mps":{},"__mpso":{},"__mpus":{},"__mpa":{},"__mpu":{},"__mpr":[],"__mpap":[],"$user_id":"fb3bd81658762d8ea2b2a083d861d659","clientSource":"PWA","appVersionCode":"1001","selected language":"English","timeZone":"+05:30","deviceId":"fb3bd81658762d8ea2b2a083d861d659","mailId":"","phone":"7356775981","gender":"","firstName":"","lastName":"","mobileNumber":"7356775981","userId":"7356775981","selectedCity":"palakkad"}',
     }
     params = {'route_id': route,'day': day}
+    log = LogHelper(name="Route Details", path=url,request_body=params)
     response = requests.get(url, headers=headers, cookies=cookies, params=params)
     return log.save_and_get_response(response)
 
@@ -113,5 +113,52 @@ def route_live(route,stop):
     response = requests.get(url, headers=headers)
     return log.save_and_get_response(response)
 
-def busses_in_radius_dummy():
-    return {}
+def buses_in_radius_dummy():
+    return {
+        'buses': [{
+            'session': {
+                '_routeId': '0qNxLiZo',
+                '_agency': 'ksrtc',
+                '_vehicleId': 'RSC319',
+                '_fromName': 'Thrissur Bus Stand',
+                '_toName': 'Palakkad Bus Stand',
+                '_routeName': 'Thrissur-Palakkad',
+                '_streamId': '00Txid7cp1X4l',
+                '_operatorId': '275',
+                '_mode': 'BUS'
+            },
+            'parameters': {
+                'bearing': 276,
+                'nextStopId': 'HbAqYQcr',
+                'lon': 76.48429,
+                'time': 1782700629427,
+                'nextStopName': 'Vadakkenchery Cherupushpam',
+                'lat': 10.592672,
+                'nextStopEta': 0
+            }
+        }, {
+            'session': {
+                '_routeId': '0uWOdaIB',
+                '_agency': 'ksrtc',
+                '_vehicleId': 'ATM212',
+                '_fromName': 'Kothamangalam Bus Stand',
+                '_toName': 'Gandhipuram Coimbatore Bus Stand',
+                '_routeName': 'Kothamangalam-Coimbatore',
+                '_streamId': '00TxfyObcczJu',
+                '_operatorId': '275',
+                '_mode': 'BUS'
+            },
+            'parameters': {
+                'bearing': 16,
+                'nextStopId': 'KgmtzUyK',
+                'lon': 76.486725,
+                'time': 1782700623284,
+                'nextStopName': 'Azeezia Hospital',
+                'lat': 10.597147,
+                'nextStopEta': 11
+            }
+        }],
+        'cardsInfo': {
+            'cards': []
+        }
+    }
