@@ -4,16 +4,32 @@ from django.db import models
 class User(AbstractUser):
     is_driver=models.BooleanField(default=False)
 
+class ChaloApiRequestLog(models.Model):
+    method = models.CharField(max_length=10)
+    path = models.CharField(max_length=500)
+    query_string = models.TextField(blank=True)
+    # Request Data
+    request_headers = models.JSONField(default=dict, blank=True)
+    request_body = models.JSONField(null=True, blank=True)
+    # Response
+    status_code = models.PositiveSmallIntegerField()
+    response_headers = models.JSONField(default=dict, blank=True)
+    response_body = models.JSONField(null=True, blank=True)
+    
+    duration_ms = models.PositiveIntegerField()
+    error = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
 class StopGroup(models.Model):
     name = models.CharField(max_length=255)
-    def is_all_near(self, threshold_km=1):
-        from geopy.distance import geodesic
-        stops = list(self.stop_set.all())
-        base = (stops[0].latitude, stops[0].longitude)
-        return all(
-            geodesic(base, (s.latitude, s.longitude)).km <= threshold_km
-            for s in stops
-        )
+    # def is_all_near(self, threshold_km=1):
+    #     from geopy.distance import geodesic
+    #     stops = list(self.stop_set.all())
+    #     base = (stops[0].latitude, stops[0].longitude)
+    #     return all(
+    #         geodesic(base, (s.latitude, s.longitude)).km <= threshold_km
+    #         for s in stops
+    #     )
     def __str__(self):
         return self.name
 

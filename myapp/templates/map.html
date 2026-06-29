@@ -99,7 +99,7 @@
         constructor(pos, text) { super(); this.pos = pos; this.text = text; this.div = null; }
         onAdd() {
           this.div = $('<div>', {class: 'bus-label',text: `🚌 ${this.text}`})
-          .click(() => location.href = `details.html?bus=${encodeURIComponent(this.text)}`);
+          .click(() => location.href = `/route/0IxkfZMw/?bus=${encodeURIComponent(this.text)}`);
           $(this.getPanes().floatPane).append(this.div);
         }
         draw() {
