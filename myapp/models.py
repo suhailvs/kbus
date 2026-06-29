@@ -4,26 +4,6 @@ from django.db import models
 class User(AbstractUser):
     is_driver=models.BooleanField(default=False)
 
-class ChaloApiRequestLog(models.Model):
-    name = models.CharField(max_length=50)
-    method = models.CharField(max_length=10)
-    path = models.CharField(max_length=500)
-    query_string = models.TextField(blank=True)
-    # Request Data
-    request_headers = models.JSONField(default=dict, blank=True)
-    request_body = models.JSONField(null=True, blank=True)
-    # Response
-    status_code = models.PositiveSmallIntegerField(default=0)
-    response_headers = models.JSONField(default=dict, blank=True)
-    response_body = models.JSONField(null=True, blank=True)
-    
-    duration_ms = models.PositiveIntegerField(default=0)
-    error = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        ordering = ['-created_at']
-    
 class StopGroup(models.Model):
     name = models.CharField(max_length=255)
     # def is_all_near(self, threshold_km=1):

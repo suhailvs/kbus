@@ -1,37 +1,38 @@
 from datetime import datetime
+import json
 from django.shortcuts import render
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 from .models import Route, RouteStop,Stop
 from .utils import remove_duplicates, get_or_create_route
-from . import chalo_api
 
 def route(request, route_id):
-    route,msg = get_or_create_route(route_id)
-    if not route:
-        return JsonResponse({"status":400,"msg": msg})
-    return render(request, "route.html", {"route":route,"msg": msg})
+    obj = Route.objects.filter(route_id=route_id).first()
+    return render(request, "route.html", {'route':obj,'route_id':route_id})
 
-def buses_in_radius_live(request):
-    data = chalo_api.buses_in_radius(request.GET.get("lat"), request.GET.get("lng"))
-    # data = chalo_api.buses_in_radius_dummy()
-    buses = []
-    for bus in data['buses']:  
-        buses.append({
-            "name": bus['session']['_routeName'],
-            "lat": str(bus['parameters']['lat']),
-            "log": str(bus['parameters']['lon']),
-            "route_id": bus['session']['_routeId'],
-            "vehicle_id": bus['session']['_vehicleId'],
-        })        
-    return JsonResponse({"buses": buses})
+@csrf_exempt
+def ajax_save_route_details(request):
+    route = get_or_create_route(json.loads(request.body))
+    if route:
+        return JsonResponse({
+            'pk': route.pk,
+            'polyline':route.polyline,
+            'subCategory':route.subCategory,
+            'serviceCategory':route.serviceCategory,
+            'route_name': route.route_name,
+            'via': route.via,
+        })
+    return JsonResponse({"error": "Failed to save route details."}, status=400)
 
-def route_live_status(request, pk):
-    route = Route.objects.get(id=pk)
+@csrf_exempt
+def ajax_route_live(request):
+    raw_data = json.loads(request.body)
+    routelive = remove_duplicates(raw_data['data']['routeLiveInfo'])
+    route = Route.objects.get(id=raw_data['pk'])
     route_stops = RouteStop.objects.filter(route=route).select_related("stop")
-    raw_data = remove_duplicates(chalo_api.route_live(route.route_id,route.first_stop.stop_id)['routeLiveInfo'])
     current_time = int(datetime.now().timestamp() * 1000)    
     buses_by_stop = {}
-    for bus in raw_data.values():
+    for bus in routelive.values():
         if current_time - bus["tS"] > 15 * 60 * 1000:continue
         name=Stop.objects.get(stop_id=bus['psId']).group.name
         buses_by_stop.setdefault(bus['psId'], []).append({

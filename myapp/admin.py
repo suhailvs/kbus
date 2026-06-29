@@ -1,16 +1,12 @@
 from django.contrib import admin
 from django.db.models import Count
-from .models import Stop, User,Route,RouteStop, Trip, StopGroup, ChaloApiRequestLog
+from .models import Stop, User,Route,RouteStop, Trip, StopGroup
 
 admin.site.register(User)
 admin.site.register(Stop)
 admin.site.register(Route)
 admin.site.register(RouteStop)
 admin.site.register(Trip)
-
-@admin.register(ChaloApiRequestLog)
-class ChaloApiRequestLogAdmin(admin.ModelAdmin):
-    list_display = ("name", "method", "path", "status_code", "duration_ms", "created_at")
 
 @admin.register(StopGroup)
 class StopGroupAdmin(admin.ModelAdmin):

@@ -1,8 +1,6 @@
-from datetime import datetime
 import json
 from django.db import transaction
 from .models import Route, RouteStop, Stop, StopGroup, Trip
-from . import chalo_api
 
 def get_or_create_stop(stop_data):
     group, _ = StopGroup.objects.get_or_create(name=stop_data.get("stop_name"))
@@ -22,14 +20,11 @@ def get_or_create_stop(stop_data):
     return stop
 
 @transaction.atomic
-def get_or_create_route(route_id):
-    route = Route.objects.filter(route_id=route_id).first()
-    if route:
-        return (route, f"Route({route_id}) already exists in DB.")
-    payload = chalo_api.route_details(route_id,datetime.today().strftime("%A").lower())
+def get_or_create_route(payload):
     route_data = payload.get("route")
     if not route_data:
-        return (None, "route key not found in chalo API response.")
+        # "route key not found in chalo API response."
+        return None
     first_stop_data = route_data.get("first_stop")
     last_stop_data = route_data.get("last_stop")
     first_stop = get_or_create_stop(first_stop_data) if first_stop_data else None
@@ -70,7 +65,7 @@ def get_or_create_route(route_id):
                 "trip_duration": trip_data.get("trip_duration"),
             },
         )        
-    return (route, f"New route created successfully with {len(route_stops)} stops.")
+    return route
 
 def remove_duplicates(data):
     # remove_duplicate_bus_no_with_latest_ts
@@ -84,3 +79,16 @@ def remove_duplicates(data):
         if v_no not in latest or ts > latest[v_no][1].get("tS", 0):
             latest[v_no] = (key, entry)
     return {key: entry for key, (key, entry) in latest.items()}
+
+# class LogHelper:
+#     def __init__(self,name, path):
+#         from .models import ChaloApiRequestLog
+#         import time
+#         self.log = RequestLog.objects.create(name=name, path=path)
+#         self.start_time = time.perf_counter()
+
+#     def save_field(self,field_name, data=''):
+#         if field_name=='duration_ms':
+#             data = int((time.perf_counter() - self.start_time) * 1000)
+#         setattr(self.log, field_name, data)
+#         self.log.save()

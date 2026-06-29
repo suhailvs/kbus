@@ -33,7 +33,7 @@
 
 .info-label { font-size: 10px; letter-spacing: .05em; }
 .info-value { font-size: 12px; }
-#map { height: 400px; }
+#map { height: 100dvh; width: 100%; }
 .icon-btn {
   width: 30px; height: 30px;
   border-radius: 50%;
@@ -49,6 +49,9 @@
 .icon-btn:hover { background: #e9ecef; color: #1a73e8; }
 .icon-btn.spinning .ti { display: inline-block; animation: spin 0.7s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.bus-card { background: #EAF2FB; border-color: #A8C8E8; }
+.bus-badge { background: #ddeefa; color: #1C5E8A; border: 1px solid #A8C8E8; }
 </style>
 {% endblock %}
 {% block bodytags %} class="bg-light py-5 px-3 d-flex justify-content-center"{% endblock %}
@@ -57,12 +60,11 @@
   <!-- Header -->
   <div class="card-header bg-white border-bottom px-4 py-3 d-flex align-items-start justify-content-between gap-2">
     <div>
-      <p class="text-primary fw-semibold mb-1" style="font-size:11px;letter-spacing:.12em;text-transform:uppercase">KSRTC · {{ route.subCategory }} {{ route.serviceCategory }}</p>
-      <p class="fw-bold mb-0 fs-5">{{ route.route_name }}</p>
-      <p class="text-secondary mb-0 small" style="overflow-wrap: anywhere;">Via:{{ route.via }}</p>
-      <p style="font-size:9px" class="text-secondary mb-0">{{ msg }}</p>
+      <p id="catDisplay" class="text-primary fw-semibold mb-1" style="font-size:11px;letter-spacing:.12em;text-transform:uppercase">KSRTC · {{ route.subCategory }} {{ route.serviceCategory }}</p>
+      <p id="routenameDisplay" class="fw-bold mb-0 fs-5">{{ route.route_name }}</p>
+      <p id="viaDisplay" class="text-secondary mb-0 small" style="overflow-wrap: anywhere;">Via:{{ route.via }}</p>
     </div>
-    <div class="d-flex flex-column align-items-end gap-2 mt-1">
+		<div class="d-flex flex-column align-items-end gap-2 mt-1">
       <span class="badge rounded-pill d-flex align-items-center gap-1 px-3 py-2"
             style="background:#EAF5EC;border:1px solid #A8D8B0;color:#2E7D44;font-size:11px">
         <span class="live-dot rounded-circle d-inline-block" style="width:6px;height:6px;background:#2E7D44"></span>
@@ -115,31 +117,27 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://unpkg.com/@mapbox/polyline/src/polyline.js"></script>
 <script>
-const API_URL = "{% url 'route_live_status' route.id %}";
+const route_id = "{{ route_id }}";
+let pk = "{{ route.pk|default:'' }}";
+let first_stop = "{{ route.first_stop.stop_id|default:'' }}";
 let map;
 let stops = [];
-const encoded_polyline = "{{ route.polyline|escapejs }}";
+let encoded_polyline = "{{ route.polyline|escapejs }}";
 let targetBus = "{{request.GET.bus|default:''}}"; // bus number to scroll to on initial load
 
 function scrollToBus(busNumber) {
   const el = document.getElementById(`bus-${busNumber}`);
   if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); 
 }
-function cell(label, content) {
-  return `<div>
-    <p class="info-label text-uppercase text-secondary mb-0">${label}</p>
-    <p class="info-value fw-medium mb-0">${content}</p>
-  </div>`;
-}
 
 function busCard(b) {
   return `
-  <div id="bus-${b.vNo}" class="rounded-3 p-2 mb-2 border" style="background:#EAF2FB;border-color:#A8C8E8!important">
+  <div id="bus-${b.vNo}" class="rounded-3 p-2 mb-2 border bus-card">
     <div class="d-flex align-items-center justify-content-between mb-2 gap-2">
       <span class="fw-semibold small text-dark">
         <i class="ti ti-bus text-primary me-1"></i>${b.vNo}
       </span>
-      <span class="badge rounded-pill small" style="background:#ddeefa;color:#1C5E8A;border:1px solid #A8C8E8">${b.message}</span>
+      <span class="badge rounded-pill small bus-badge">${b.message}</span>
     </div>
   </div>`;
 }
@@ -164,28 +162,7 @@ function renderStops(stops) {
       </div>`;
   });
   $("#routeArea").html(html);
-  $("#busCount").html(`${total} bus${total !== 1 ? "es" : ""} tracked`);
-}
-
-function fetchAndRender() {
-  const btn = $("#btnRefresh").addClass('spinning').prop('disabled', true); 
-  $.ajax({url: API_URL,method: "GET",dataType: "json"})
-  .done(function (data) {
-    stops = data.stops;
-    renderStops(data.stops);
-    if (targetBus){      
-      scrollToBus(targetBus);
-      targetBus = null; // only scroll once on initial load
-    }
-  })
-  .fail(function (xhr) {
-    $("#routeArea").html(
-      `<div class="text-danger small">Couldn't load live status. Try again.</div>`
-    );
-  })
-  .always(function () {
-    btn.removeClass('spinning').prop('disabled', false);
-  });
+  $("#busCount").text(`${total} bus${total !== 1 ? "es" : ""} tracked`);
 }
 
 document.getElementById('mapModal').addEventListener('shown.bs.modal', function () {
@@ -198,10 +175,10 @@ document.getElementById('mapModal').addEventListener('shown.bs.modal', function 
     }).addTo(map)
     L.polyline(coords, { color: 'blue', weight: 4 }).addTo(map);
     map.fitBounds(coords);
-    L.marker([10.59975, 76.45969], {icon: L.divIcon({className: '', html: `<i class="ti ti-map-pin text-warning fs-4"></i>`})})
-      .bindPopup("Test Stop").addTo(map);    
-    L.marker([10.29875, 76.35569], {icon: L.divIcon({className: 'bus-marker', html: `<i class="ti ti-bus text-success fs-4"></i>`})})
-    .bindPopup(`<strong>Test Bus</strong><br>Test message`).addTo(map);
+    // L.marker([10.59975, 76.45969], {icon: L.divIcon({className: '', html: `<i class="ti ti-map-pin text-warning fs-4"></i>`})})
+    //   .bindPopup("Test Stop").addTo(map);    
+    // L.marker([10.29875, 76.35569], {icon: L.divIcon({className: 'bus-marker', html: `<i class="ti ti-bus text-success fs-4"></i>`})})
+    // .bindPopup(`<strong>Test Bus</strong><br>Test message`).addTo(map);
   }
   // add stop markers
   stops.forEach(stop => {
@@ -219,12 +196,80 @@ document.getElementById('mapModal').addEventListener('shown.bs.modal', function 
   map.invalidateSize(); // fix tile rendering after modal animation
 });
 
+function apiRouteDetails() {
+	if (first_stop) {
+		console.log("First stop is already set, so not calling the api RouteDetail: " + first_stop);
+		return $.Deferred().resolve(null).promise();
+	}
+	const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+	const day = days[new Date().getDay()];
+	return $.ajax({
+		url: 'https://chalo.com/app/api/scheduler_v4/v4/palakkad/routedetailslive',
+		method: 'GET',
+		data: { route_id, day },
+		error: function(xhr, status, error) {
+				console.error('Error:', error, xhr.responseText);
+		}
+	});
+}
+function apiRouteLive() {
+	return $.ajax({
+		url: `https://chalo.com/app/api/vasudha/track/route-live-info/palakkad/${route_id}`,
+		method: 'GET',
+		data: { stopIds: first_stop },
+		error: function(xhr, status, error) {
+				console.error('Error:', error, xhr.responseText);
+		}
+	});
+}
+
+function fetchAndRender() {
+	// when refresh button clicked
+	if (!pk) return; 
+  const btn = $("#btnRefresh").addClass('spinning').prop('disabled', true); 
+  apiRouteLive().then(data => {
+		$.post("/ajax_route_live/", JSON.stringify({data,pk}), null, "json")
+		.done(function (data) {
+			stops = data.stops;
+			renderStops(data.stops);
+			if (targetBus){      
+				scrollToBus(targetBus);
+				// targetBus = null; // only scroll once on initial load
+			}
+		})
+		.fail(function (xhr) {
+			$("#routeArea").html(
+				`<div class="text-danger small">Couldn't load live status. Try again.</div>`
+			);
+		})
+		.always(function () {
+			btn.removeClass('spinning').prop('disabled', false);
+		});
+	});
+}
+
+
 $(function () {  
+	apiRouteDetails().then(data => {
+		if (data){
+			// route not exists in db. so create it
+			first_stop = data.route.first_stop.stop_id;
+			$.post("/ajax_save_route_details/", JSON.stringify(data), null, "json")
+			.done(r => {
+				pk = r.pk;
+				encoded_polyline = r.polyline;
+				$('#catDisplay').text(`KSRTC · ${ r.subCategory } ${ r.serviceCategory }`);
+				$('#routenameDisplay').text(r.route_name);
+				fetchAndRender();
+			}).fail(e => console.error(e));
+		} else {
+			fetchAndRender();
+		}
+	});
   $("#btnRefresh").on("click", fetchAndRender);
   $("#btnMap").on("click", function() {
     $("#mapModal").modal("show");
   });
-  // fetchAndRender(); // initial load
 });
 
 </script>
