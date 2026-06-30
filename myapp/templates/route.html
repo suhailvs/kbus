@@ -33,7 +33,7 @@
 
 .info-label { font-size: 10px; letter-spacing: .05em; }
 .info-value { font-size: 12px; }
-#map { height: 100dvh; width: 100%; }
+#map { width: 100%; }
 .icon-btn {
   width: 30px; height: 30px;
   border-radius: 50%;
@@ -88,14 +88,14 @@
 
 <!-- Modal -->
 <div class="modal fade" id="mapModal" tabindex="-1">
-  <div class="modal-dialog modal-xl">
+  <div class="modal-dialog modal-xl modal-fullscreen-sm-down">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Map</h5>
+      <div class="modal-header" style="position:sticky;top:0;z-index:1056;background:#fff">
+        <h5 class="modal-title">Route Map with Bus stops</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-0">
-        <div id="map"></div>
+        <div id="map" style="height:calc(100dvh - 56px)"></div>
       </div>
     </div>
   </div>
