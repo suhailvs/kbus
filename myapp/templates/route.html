@@ -123,12 +123,10 @@ function scrollToBus(busNumber) {
 function busCard(b) {
   return `
   <div id="bus-${b.vNo}" class="rounded-3 p-2 mb-2 border bus-card">
-    <div class="d-flex align-items-center justify-content-between mb-2 gap-2">
-      <span class="fw-semibold small text-dark">
-        <i class="ti ti-bus text-primary me-1"></i>${b.vNo}
-      </span>
-      <span class="badge rounded-pill small bus-badge">${b.message}</span>
-    </div>
+    <span class="fw-semibold small text-dark">
+      <i class="ti ti-bus text-primary me-1"></i>${b.vNo}
+    </span>
+    <p class="small mb-0 mt-1" style="color:#1C5E8A">${b.message}</p>
   </div>`;
 }
 
