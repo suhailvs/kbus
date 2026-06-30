@@ -223,26 +223,35 @@ function apiRouteLive() {
 	});
 }
 
+function jsonPostToDjango(url, payload) {
+  return $.ajax({
+    url,
+    method: "POST",
+    data: JSON.stringify(payload),
+    contentType: "application/json",
+    dataType: "json"
+  }).fail(function (xhr) {
+    console.error(`POST ${url} failed (${xhr.status}):`, xhr.responseText?.slice(0, 200));
+  });
+}
+
 function fetchAndRender() {
 	// when refresh button clicked
 	if (!pk) return; 
   const btn = $("#btnRefresh").addClass('spinning').prop('disabled', true); 
   apiRouteLive().then(data => {
-		$.post("/ajax_route_live/", JSON.stringify({data,pk}), null, "json")
-		.done(function (data) {
+		jsonPostToDjango("/ajax_route_live/", { data, pk }).done(function (data) {
 			stops = data.stops;
 			renderStops(data.stops);
 			if (targetBus){      
 				scrollToBus(targetBus);
 				// targetBus = null; // only scroll once on initial load
 			}
-		})
-		.fail(function (xhr) {
+		}).fail(function (xhr) {
 			$("#routeArea").html(
 				`<div class="text-danger small">Couldn't load live status. Try again.</div>`
 			);
-		})
-		.always(function () {
+		}).always(function () {
 			btn.removeClass('spinning').prop('disabled', false);
 		});
 	});
@@ -254,8 +263,7 @@ $(function () {
 		if (data){
 			// route not exists in db. so create it
 			first_stop = data.route.first_stop.stop_id;
-			$.post("/ajax_save_route_details/", JSON.stringify(data), null, "json")
-			.done(r => {
+			jsonPostToDjango("/ajax_save_route_details/", data).done(r => {
 				pk = r.pk;
 				encoded_polyline = r.polyline;
 				$('#catDisplay').text(`KSRTC · ${ r.subCategory } ${ r.serviceCategory }`);
