@@ -52,3 +52,22 @@ def ajax_route_live(request):
             "lng": stop.stop_lon,
         })
     return JsonResponse({"route_id": route.route_id, "stops": stops_data})
+
+# pressman ajax
+@csrf_exempt
+def ajax_pressman_lat_lng(request):
+    import requests
+    data = json.loads(request.body)
+    url = data.get("url", "").strip()
+    print(url,'url')
+    if url:
+        try:
+            resp = requests.head(url, allow_redirects=True, timeout=5)
+            url = resp.url
+        except requests.RequestException:
+            try:
+                resp = requests.get(url, allow_redirects=True, timeout=5)
+                url = resp.url
+            except requests.RequestException:
+                pass
+    return JsonResponse({"url":url})
