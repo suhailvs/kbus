@@ -71,3 +71,14 @@ def ajax_pressman_lat_lng(request):
             except requests.RequestException:
                 pass
     return JsonResponse({"url":url})
+
+
+def backup_database(request):
+    from django.http import FileResponse, JsonResponse
+    from django.conf import settings
+    fn = settings.BASE_DIR / "mysite" / "db.sqlite3"
+    ct = "application/x-sqlite3"
+    try:
+        return FileResponse(open(fn, "rb"),content_type=ct,as_attachment=True,filename="db.sqlite3")
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
