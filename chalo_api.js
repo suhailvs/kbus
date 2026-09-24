@@ -55,6 +55,34 @@ function routeLive(route, stop) {
     });
 }
 
+function seatAvailability() {
+    const payload = {
+        mode: 2,
+        cityId: 'palakkad',
+        maxDelay: 15,
+        occupancyFactor: 50,
+        vehicle: [
+            {
+                number: 'AT550',
+                timeStamp: 1782374777074,
+                routeId: 'jeBEoISp',
+                stopId: 'XuXwGDOD'
+            }
+        ]
+    };
+    $.ajax({
+        url: 'https://chalo.com/app/api/seat/availability',
+        method: 'POST',
+        data: JSON.stringify(payload),
+        contentType: 'application/json',
+        dataType: 'json'
+    })
+    .done(function (data) {console.log(data);})
+    .fail(function (xhr) {console.log(xhr.responseText?.slice(0, 200));
+    });
+}
+
 busesInRadius(10.776, 76.971);
 routeDetails('0bAuGARK', 'tuesday');
 routeLive("0bAuGARK","pUEvXzth");
+seatAvailability();
